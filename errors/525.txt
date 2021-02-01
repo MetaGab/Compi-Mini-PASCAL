@@ -1,0 +1,7 @@
+program ejemplo;
+var
+    a : integer;
+    b : string;
+begin
+    write(a div b)
+end.

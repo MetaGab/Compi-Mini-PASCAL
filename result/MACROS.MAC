@@ -1,0 +1,916 @@
+; LIBRERIA DE MACROS UTILIZADAS EN EL COMPILADOR
+
+; 								
+; �������������������������������������������������������������������������
+; ������������� WRITE, WRITELN, READ Y READLN������������������������������
+; �������������������������������������������������������������������������
+
+;****************************************************************************
+;MACRO		: WRITE
+;PROPOSITO	: Escribe una string sin salto de linea
+;PARAMETROS	: MESSAGE
+;****************************************************************************
+
+WRITE 	MACRO MESSAGE
+		PUSH AX	;EXTRA
+		MOV AH, 09H
+		LEA DX, MESSAGE
+		INT 21H
+		POP AX	;EXTRA
+	ENDM
+
+;****************************************************************************
+;MACRO		: WRITELN
+;PROPOSITO	: Escribe un salto de linea
+;PARAMETROS	: N/A
+;****************************************************************************
+
+WRITELN	MACRO
+		MOV AH, 2
+		MOV DL, 0AH
+		INT 21H
+
+		MOV AH, 2
+		MOV DL, 0DH
+		INT 21H
+	ENDM
+	
+;****************************************************************************
+;MACRO		: READ
+;PROPOSITO	: Lee un input en string y lo guarda en MSG
+;PARAMETROS	: N/A
+;****************************************************************************
+
+READ	MACRO
+		MOV AH, 0AH
+		LEA DX, MAXLEN
+		INT 21H
+		MOV AL, LEN
+		CBW ; EXTEND AL TO AX
+		MOV SI, AX
+		MOV MSG+SI, '$'
+	ENDM
+	
+
+; �������������������������������������������������������������������������
+; ������������� OPERACIONES ARITMETICAS �����������������������������������
+; �������������������������������������������������������������������������
+
+;****************************************************************************
+;MACRO		: S_ASIGNAR
+;PROPOSITO	: Asignación de string
+;PARAMETROS	: OPERANDO1 (recibe string), OPERANDO2 (valor)
+;****************************************************************************
+
+S_ASIGNAR MACRO OPERANDO1, OPERANDO2
+	LOCAL LABELX
+	LOCAL EXIT
+		PUSH AX
+		LEA SI, OPERANDO2
+		LEA DI, OPERANDO1
+	LABELX:
+		MOV AL, [SI]
+		MOV AH, [DI]
+		CMP AL,  BYTE PTR '$'
+		JE EXIT
+		MOV AL, [SI]
+		MOV [DI],AL
+		INC DI
+		INC SI
+		JMP LABELX
+	EXIT:
+		POP AX
+	ENDM
+
+;****************************************************************************
+;MACRO		: CONCATENAR
+;PROPOSITO	: Concatenación de strings y lo almacena en RESULTADO
+;PARAMETROS	: OPERANDO1, OPERANDO2, RESULTADO 
+;****************************************************************************
+
+CONCATENAR MACRO OPERANDO1, OPERANDO2, RESULTADO
+	LOCAL LABELX
+	LOCAL EXIT
+	LOCAL LABELX1
+	LOCAL EXIT1
+		PUSH AX
+		LEA SI, OPERANDO1
+		LEA DI, RESULTADO
+	LABELX:
+		MOV AL, [SI]
+		MOV AH, [DI]
+		CMP AH, AL
+		JE EXIT
+		MOV AL, [SI]
+		MOV [DI], AL
+		INC DI
+		INC SI
+		JMP LABELX
+	EXIT:
+		LEA SI, OPERANDO2
+	LABELX1:
+		MOV AL, [SI]
+		MOV AH, [DI]
+		CMP AH, AL
+		JE EXIT1
+		MOV AL, [SI]
+		MOV [DI], AL
+		INC DI
+		INC SI
+		JMP LABELX1
+	EXIT1:
+		POP AX
+	ENDM
+
+;****************************************************************************
+;MACRO		: I_ASIGNAR
+;PROPOSITO	: Asignacion de enteros
+;PARAMETROS	: OPERANDO1 (recibe int), OPERANDO2 (valor)
+;****************************************************************************
+
+I_ASIGNAR MACRO OPERANDO1, OPERANDO2
+		PUSH AX
+	 	MOV AX, OPERANDO2
+		MOV OPERANDO1, AX
+		POP AX
+	ENDM
+
+;****************************************************************************
+;MACRO		: SUMAR
+;PROPOSITO	: Suma de enteros que se coloca en RESULTADO
+;PARAMETROS	: OPERANDO1, OPERANDO2, RESULTADO
+;****************************************************************************
+
+SUMAR	MACRO OPERANDO1, OPERANDO2, RESULTADO
+		PUSH AX
+        		MOV AX, OPERANDO1
+		ADD AX, OPERANDO2
+		MOV RESULTADO, AX
+		POP AX
+	ENDM
+
+
+;****************************************************************************
+;MACRO		: F_SUMAR
+;PROPOSITO	: Suma de reales que se coloca en RESULTADO
+;PARAMETROS	: OPERANDO1, OPERANDO2, RESULTADO
+;****************************************************************************
+
+F_SUMAR	MACRO OPERANDO1, OPERANDO2, RESULTADO
+        LES DI, OPERANDO1
+		LSFPA
+		LES DI, OPERANDO2
+		LSFPO
+		FPADD
+		LES DI, RESULTADO
+		SSFPA
+	ENDM
+
+;****************************************************************************
+;MACRO		: RESTA
+;PROPOSITO	: Resta de enteros que se coloca en RESULTADO
+;PARAMETROS	: OPERANDO1, OPERANDO2, RESULTADO
+;****************************************************************************
+
+RESTA	MACRO OPERANDO1, OPERANDO2, RESULTADO
+		PUSH AX
+		MOV AX, OPERANDO1
+		SUB AX, OPERANDO2
+		MOV RESULTADO, AX
+		POP AX
+	ENDM
+
+;****************************************************************************
+;MACRO		: F_RESTA
+;PROPOSITO	: Resta de reales que se coloca en RESULTADO
+;PARAMETROS	: OPERANDO1, OPERANDO2, RESULTADO
+;****************************************************************************
+
+F_RESTA	MACRO OPERANDO1, OPERANDO2, RESULTADO
+        LES DI, OPERANDO1
+		LSFPA
+		LES DI, OPERANDO2
+		LSFPO
+		FPSUB
+		LES DI, RESULTADO
+		SSFPA
+	ENDM
+
+;****************************************************************************
+;MACRO		: MULTI
+;PROPOSITO	: Multiplicación de enteros que se coloca en RESULTADO
+;PARAMETROS	: OPERANDO1, OPERANDO2, RESULTADO
+;****************************************************************************
+
+MULTI	MACRO OPERANDO1, OPERANDO2, RESULTADO
+		PUSH AX
+		PUSH BX
+		MOV AX, OPERANDO1
+		MOV BX, OPERANDO2
+		IMUL BX
+		MOV RESULTADO, AX
+		POP BX
+		POP AX
+	ENDM
+
+;****************************************************************************
+;MACRO		: F_MULTI
+;PROPOSITO	: Multiplicación de reales que se coloca en RESULTADO
+;PARAMETROS	: OPERANDO1, OPERANDO2, RESULTADO
+;****************************************************************************
+
+F_MULTI	MACRO OPERANDO1, OPERANDO2, RESULTADO
+        LES DI, OPERANDO1
+		LSFPA
+		LES DI, OPERANDO2
+		LSFPO
+		FPMUL
+		LES DI, RESULTADO
+		SSFPA
+	ENDM
+
+;****************************************************************************
+;MACRO		: DIVIDE
+;PROPOSITO	: Divison de enteros que se coloca en RESULTADO (regresa entero)
+;PARAMETROS	: OPERANDO1, OPERANDO2, RESULTADO
+;****************************************************************************
+
+DIVIDE	MACRO OPERANDO1, OPERANDO2, RESULTADO
+		PUSH AX
+		PUSH BX
+		MOV DX, 0
+		MOV AX, OPERANDO1
+		CWD
+		MOV BX, OPERANDO2
+		IDIV BX
+		MOV RESULTADO, AX
+	    POP BX
+	    POP AX
+	ENDM
+
+;****************************************************************************
+;MACRO		: F_DIVIDE
+;PROPOSITO	: Divison de reales que se coloca en RESULTADO (regresa real)
+;PARAMETROS	: OPERANDO1, OPERANDO2, RESULTADO
+;****************************************************************************
+
+F_DIVIDE MACRO OPERANDO1, OPERANDO2, RESULTADO
+	LES DI, OPERANDO1
+	LSFPA
+	LES DI, OPERANDO2
+	LSFPO
+	FPDIV
+	LES DI, RESULTADO
+	SSFPA
+ENDM
+
+
+;****************************************************************************
+;MACRO		: MODULO
+;PROPOSITO	: Operación modulo que se coloca en RESULTADO (regresa entero)
+;PARAMETROS	: OPERANDO1, OPERANDO2, RESULTADO
+;****************************************************************************
+
+MODULO	MACRO OPERANDO1, OPERANDO2, RESULTADO
+		PUSH AX
+		PUSH BX
+		MOV DX, 0
+		MOV AX, OPERANDO1
+		CWD
+		MOV BX, OPERANDO2
+		IDIV BX
+		MOV RESULTADO, DX
+	    POP BX
+	    POP AX
+	ENDM
+	
+;****************************************************************************
+;MACRO		: SIGNOMENOS
+;PROPOSITO	: Regresa el OPERANDO1 con el signo inverso y lo coloca en RESULTADO
+;PARAMETROS	: OPERANDO1, RESULTADO
+;****************************************************************************
+
+SIGNOMENOS MACRO OPERANDO1, RESULTADO
+		PUSH AX
+		PUSH BX
+		MOV AX, OPERANDO1
+		MOV BX, -1
+		IMUL BX
+		MOV RESULTADO, AX
+		POP BX
+		POP AX
+	ENDM
+
+
+; �������������������������������������������������������������������������
+; ��������� MACROS DE OPERADORES RELACIONALES �����������������������������
+; �������������������������������������������������������������������������
+
+;****************************************************************************
+;MACRO		: I_MENOR
+;PROPOSITO	: Menor que de enteros, regresa RESULTADO (0/1)
+;PARAMETROS	: OPERANDO1, OPERANDO2, RESULTADO
+;****************************************************************************
+
+I_MENOR	MACRO OPERANDO1, OPERANDO2, RESULTADO
+	LOCAL LABEL1
+	LOCAL SALIR
+		PUSH AX
+		MOV AX, OPERANDO1
+		CMP AX, OPERANDO2
+		JGE LABEL1
+		MOV RESULTADO, 1
+		JMP SALIR
+	LABEL1:
+		MOV RESULTADO, 0
+	SALIR:
+		POP AX
+	ENDM
+
+;****************************************************************************
+;MACRO		: F_MENOR
+;PROPOSITO	: Menor que de reales, regresa RESULTADO (0/1)
+;PARAMETROS	: OPERANDO1, OPERANDO2, RESULTADO
+;****************************************************************************
+
+F_MENOR	MACRO OPERANDO1, OPERANDO2, RESULTADO
+	LOCAL LABEL1
+	LOCAL SALIR
+		LES DI, OPERANDO1
+		LSFPA
+		LES DI, OPERANDO2
+		LSFPO
+		FPCMP
+		JL LABEL1
+		MOV RESULTADO, 0
+		JMP SALIR
+	LABEL1:
+		MOV RESULTADO, 1
+	SALIR:
+	ENDM
+
+;****************************************************************************
+;MACRO		: I_MENORIGUAL
+;PROPOSITO	: Menor o igual que de enteros, regresa RESULTADO (0/1)
+;PARAMETROS	: OPERANDO1, OPERANDO2, RESULTADO
+;****************************************************************************
+
+I_MENORIGUAL	MACRO OPERANDO1, OPERANDO2, RESULTADO
+	LOCAL LABEL1
+	LOCAL SALIR
+		PUSH AX
+		MOV AX, OPERANDO1
+		CMP AX, OPERANDO2
+		JG	LABEL1
+		MOV RESULTADO, 1
+		JMP SALIR
+	LABEL1:
+		MOV RESULTADO, 0
+	SALIR:
+		POP AX
+	ENDM
+
+;****************************************************************************
+;MACRO		: F_MENORIGUAL
+;PROPOSITO	: Menor o igual que de reales, regresa RESULTADO (0/1)
+;PARAMETROS	: OPERANDO1, OPERANDO2, RESULTADO
+;****************************************************************************
+
+F_MENORIGUAL	MACRO OPERANDO1, OPERANDO2, RESULTADO
+	LOCAL LABEL1
+	LOCAL SALIR
+		LES DI, OPERANDO1
+		LSFPA
+		LES DI, OPERANDO2
+		LSFPO
+		FPCMP
+		JLE LABEL1
+		MOV RESULTADO, 0
+		JMP SALIR
+	LABEL1:
+		MOV RESULTADO, 1
+	SALIR:
+	ENDM
+
+;****************************************************************************
+;MACRO		: I_IGUAL
+;PROPOSITO	: Igual que de enteros, regresa RESULTADO (0/1)
+;PARAMETROS	: OPERANDO1, OPERANDO2, RESULTADO
+;****************************************************************************
+
+I_IGUAL	MACRO OPERANDO1, OPERANDO2, RESULTADO
+	LOCAL LABEL1
+	LOCAL SALIR
+		PUSH AX
+		MOV AX, OPERANDO1
+		CMP AX, OPERANDO2
+		JNE LABEL1
+		MOV RESULTADO, 1
+		JMP SALIR
+	LABEL1:
+		MOV RESULTADO, 0
+	SALIR:
+		POP AX
+	ENDM
+
+;****************************************************************************
+;MACRO		: F_IGUAL
+;PROPOSITO	: Igual que de reales, regresa RESULTADO (0/1)
+;PARAMETROS	: OPERANDO1, OPERANDO2, RESULTADO
+;****************************************************************************
+
+F_IGUAL	MACRO OPERANDO1, OPERANDO2, RESULTADO
+	LOCAL LABEL1
+	LOCAL SALIR
+		LES DI, OPERANDO1
+		LSFPA
+		LES DI, OPERANDO2
+		LSFPO
+		FPCMP
+		JE LABEL1
+		MOV RESULTADO, 0
+		JMP SALIR
+	LABEL1:
+		MOV RESULTADO, 1
+	SALIR:
+	ENDM
+
+;****************************************************************************
+;MACRO		: S_IGUAL
+;PROPOSITO	: Igual que de strings, regresa RESULTADO (0/1)
+;PARAMETROS	: OPERANDO1, OPERANDO2, RESULTADO
+;****************************************************************************
+
+S_IGUAL	MACRO OPERANDO1, OPERANDO2, RESULTADO
+	LOCAL LABELX
+	LOCAL LABELY
+	LOCAL PREEXIT
+	LOCAL EXIT
+		PUSH AX
+		LEA SI, OPERANDO2
+		LEA DI, OPERANDO1
+		MOV RESULTADO, 1
+	LABELX:
+		MOV AL, [SI]
+		MOV AH, [DI]
+		CMP AH, AL
+		JNE LABELY
+		INC DI
+		INC SI
+		CMP [SI],  BYTE PTR '$'
+		JE PREEXIT
+		JMP LABELX
+	PREEXIT:
+		CMP [DI],  BYTE PTR '$'
+		JE EXIT
+		JMP LABELX
+	LABELY:
+		MOV RESULTADO, 0
+	EXIT:
+		POP AX
+	ENDM
+
+
+;****************************************************************************
+;MACRO		: S_DIFERENTES
+;PROPOSITO	: Diferente que de strings, regresa RESULTADO (0/1)
+;PARAMETROS	: OPERANDO1, OPERANDO2, RESULTADO
+;****************************************************************************
+
+S_DIFERENTES MACRO OPERANDO1, OPERANDO2, RESULTADO
+	LOCAL LABELX
+	LOCAL LABELY
+	LOCAL PREEXIT
+	LOCAL EXIT
+		PUSH AX
+		LEA SI, OPERANDO2
+		LEA DI, OPERANDO1
+		MOV RESULTADO, 0
+	LABELX:
+		MOV AL, [SI]
+		MOV AH, [DI]
+		CMP AH, AL
+		JNE LABELY
+		INC DI
+		INC SI
+		CMP [SI],  BYTE PTR '$'
+		JE PREEXIT
+		JMP LABELX
+	PREEXIT:
+		CMP [DI],  BYTE PTR '$'
+		JE EXIT
+		JMP LABELX
+	LABELY:
+		MOV RESULTADO, 1
+	EXIT:
+		POP AX
+	ENDM
+
+;****************************************************************************
+;MACRO		: F_DIFERENTES
+;PROPOSITO	: Diferente que de reales, regresa RESULTADO (0/1)
+;PARAMETROS	: OPERANDO1, OPERANDO2, RESULTADO
+;****************************************************************************
+
+F_DIFERENTES	MACRO OPERANDO1, OPERANDO2, RESULTADO
+	LOCAL LABEL1
+	LOCAL SALIR
+		LES DI, OPERANDO1
+		LSFPA
+		LES DI, OPERANDO2
+		LSFPO
+		FPCMP
+		JNE LABEL1
+		MOV RESULTADO, 0
+		JMP SALIR
+	LABEL1:
+		MOV RESULTADO, 1
+	SALIR:
+	ENDM
+
+;****************************************************************************
+;MACRO		: I_DIFERENTES
+;PROPOSITO	: Diferente que de enteros, regresa RESULTADO (0/1)
+;PARAMETROS	: OPERANDO1, OPERANDO2, RESULTADO
+;****************************************************************************
+
+I_DIFERENTES	MACRO OPERANDO1, OPERANDO2, RESULTADO
+	LOCAL LABEL1
+	LOCAL SALIR
+		PUSH AX
+		MOV AX, OPERANDO1
+		CMP AX, OPERANDO2
+		JE	LABEL1
+		MOV RESULTADO, 1
+		JMP SALIR
+	LABEL1:
+		MOV RESULTADO, 0
+	SALIR:
+		POP AX
+	ENDM
+
+;****************************************************************************
+;MACRO		: I_MAYOR
+;PROPOSITO	: Mayor que de enteros, regresa RESULTADO (0/1)
+;PARAMETROS	: OPERANDO1, OPERANDO2, RESULTADO
+;****************************************************************************
+
+I_MAYOR MACRO OPERANDO1, OPERANDO2, RESULTADO
+	LOCAL LABEL1
+	LOCAL SALIR
+		PUSH AX
+		MOV AX, OPERANDO1
+	    CMP AX, OPERANDO2
+	    JLE	LABEL1
+	    MOV RESULTADO, 1
+		JMP SALIR
+	LABEL1:
+		MOV RESULTADO, 0
+	SALIR:
+		POP AX
+	ENDM
+
+;****************************************************************************
+;MACRO		: F_MAYOR
+;PROPOSITO	: Mayor que de reales, regresa RESULTADO (0/1)
+;PARAMETROS	: OPERANDO1, OPERANDO2, RESULTADO
+;****************************************************************************
+
+F_MAYOR	MACRO OPERANDO1, OPERANDO2, RESULTADO
+	LOCAL LABEL1
+	LOCAL SALIR
+		LES DI, OPERANDO1
+		LSFPA
+		LES DI, OPERANDO2
+		LSFPO
+		FPCMP
+		JG LABEL1
+		MOV RESULTADO, 0
+		JMP SALIR
+	LABEL1:
+		MOV RESULTADO, 1
+	SALIR:
+	ENDM
+
+;****************************************************************************
+;MACRO		: I_MAYORIGUAL
+;PROPOSITO	: Mayor o igual que de enteros, regresa RESULTADO (0/1)
+;PARAMETROS	: OPERANDO1, OPERANDO2, RESULTADO
+;****************************************************************************
+
+I_MAYORIGUAL MACRO OPERANDO1, OPERANDO2, RESULTADO
+	LOCAL LABEL1
+	LOCAL SALIR
+		PUSH AX
+		MOV AX, OPERANDO1
+		CMP AX, OPERANDO2
+		JL	LABEL1
+		MOV RESULTADO, 1
+		JMP SALIR
+	LABEL1:
+		MOV RESULTADO, 0
+	SALIR:
+		POP AX
+	ENDM
+
+;****************************************************************************
+;MACRO		: F_MAYORIGUAL
+;PROPOSITO	: Mayor o igual que de reales, regresa RESULTADO (0/1)
+;PARAMETROS	: OPERANDO1, OPERANDO2, RESULTADO
+;****************************************************************************
+
+F_MAYORIGUAL	MACRO OPERANDO1, OPERANDO2, RESULTADO
+	LOCAL LABEL1
+	LOCAL SALIR
+		LES DI, OPERANDO1
+		LSFPA
+		LES DI, OPERANDO2
+		LSFPO
+		FPCMP
+		JGE LABEL1
+		MOV RESULTADO, 0
+		JMP SALIR
+	LABEL1:
+		MOV RESULTADO, 1
+	SALIR:
+	ENDM
+	
+;****************************************************************************
+;MACRO		: I_AND 
+;PROPOSITO	: AND lógico, recibe 0/1 y regresa 0/1
+;PARAMETROS	: OPERANDO1, OPERANDO2, RESULTADO
+;****************************************************************************
+
+I_AND MACRO OPERANDO1, OPERANDO2, RESULTADO
+	LOCAL LABEL1
+	LOCAL SALIR
+		PUSH AX
+		MOV AX, OPERANDO1
+		AND AX, OPERANDO2
+		JZ	LABEL1
+		MOV RESULTADO, 1
+		JMP SALIR
+	LABEL1:
+		MOV RESULTADO, 0
+	SALIR:
+		POP AX
+	ENDM
+
+;****************************************************************************
+;MACRO		: I_OR 
+;PROPOSITO	: OR lógico, recibe 0/1 y regresa 0/1
+;PARAMETROS	: OPERANDO1, OPERANDO2, RESULTADO
+;****************************************************************************
+
+I_OR MACRO OPERANDO1, OPERANDO2, RESULTADO
+	LOCAL LABEL1
+	LOCAL SALIR
+		PUSH AX
+		MOV AX, OPERANDO1
+		OR AX, OPERANDO2
+		JZ	LABEL1
+		MOV RESULTADO, 1
+		JMP SALIR
+	LABEL1:
+		MOV RESULTADO, 0
+	SALIR:
+		POP AX
+	ENDM
+	
+;****************************************************************************
+;MACRO		: I_NOT 
+;PROPOSITO	: NOT lógico, recibe 0/1 y regresa 0/1
+;PARAMETROS	: OPERANDO1, RESULTADO
+;****************************************************************************
+
+I_NOT MACRO OPERANDO1, RESULTADO
+	LOCAL LABEL1
+	LOCAL SALIR
+		PUSH AX
+		CMP OPERANDO1, 1
+		JE LABEL1
+		MOV RESULTADO, 1
+		JMP SALIR
+	LABEL1:
+		MOV RESULTADO,0
+	SALIR:
+		POP AX
+	ENDM
+
+;****************************************************************************
+;MACRO		: WRITEBOOL
+;PROPOSITO	: Recibe 0/1 e imprime false/true
+;PARAMETROS	: OPERANDO1
+;****************************************************************************
+
+WRITEBOOL MACRO OPERANDO1
+	LOCAL LABEL1
+	LOCAL SALIR
+		PUSH AX
+		CMP OPERANDO1, 1
+		JE LABEL1
+		WRITE s_false
+		JMP SALIR
+	LABEL1:
+		WRITE s_true
+	SALIR:
+		POP AX
+	ENDM
+
+; �������������������������������������������������������������������������
+; ����������������������������� MACROS PARA LOS JUMP ����������������������
+; �������������������������������������������������������������������������
+
+;****************************************************************************
+;MACRO		: JMAY
+;PROPOSITO	: Brinca a DESTINO si VALOR1 es 1
+;PARAMETROS	: VALOR1, DESTINO
+;****************************************************************************
+
+JMAY	MACRO VALOR1,DESTINO
+   	MOV AX,VALOR1
+   	CMP AX,1
+   	JE  DESTINO
+
+	ENDM
+
+;****************************************************************************
+;MACRO		: JMAY
+;PROPOSITO	: Brinca a DESTINO si VALOR1 es diferente a 1
+;PARAMETROS	: VALOR1, DESTINO
+;****************************************************************************
+
+JF	MACRO VALOR1,DESTINO
+   	MOV AX,VALOR1
+   	CMP AX,1                   
+   	JNE  DESTINO
+
+	ENDM
+
+;****************************************************************************
+;MACRO		: clrscr
+;PROPOSITO	: Limpiar pantalla
+;PARAMETROS	: N/A
+;****************************************************************************
+
+clrscr MACRO
+   MOV AH,0FH
+   INT 10H
+   MOV AH,0
+   INT 10H
+ENDM
+
+;****************************************************************************
+;MACRO		: BORRAR
+;PROPOSITO	: Funcion de utileria para borrar buffers 
+;PARAMETROS	: BUFFER1, CLR
+;****************************************************************************
+
+BORRAR	MACRO BUFFER1, CLR
+	LOCAL KTERCLR1
+		MOV BL, 8
+		LEA SI, BUFFER1
+		MOV AL, CLR
+	KTERCLR1:
+		MOV [SI], AL
+		INC SI
+		DEC BL
+		CMP BL, 0
+		JNE KTERCLR1
+		;MOV [SI], AL
+	ENDM
+
+;****************************************************************************
+;MACRO		: ITOA
+;PROPOSITO	: Regresa en BUFFER la string que representa el NUMERO
+;PARAMETROS	: BUFFER, NUMERO
+;****************************************************************************
+
+ITOA	MACRO BUFFER, NUMERO
+	LOCAL C1
+	LOCAL C2
+	LOCAL C3
+	LOCAL C4
+		PUSH CX
+		PUSH AX	;EXTRA
+		BORRAR BUFFER, BLANCOS
+		BORRAR BUFFERTEMP, BLANCOS
+		MOV COUNT, 0
+		MOV NEGATIVO, 0
+		MOV CX, 0010		;FACTOR DE DIVISION
+	    LEA SI, BUFFER		;DIRECCION DE NUEVA CADENA ASCII
+		MOV AX, NUMERO		;NUMERO A CONVERTIR A ASCII
+		CMP AX, 0
+		JNS C1				;SI NO SIGNO
+		NOT AX
+		INC AX
+ 		MOV NEGATIVO, 1
+	C1:
+		CMP AX, CX			;EL NUMERO ES MENOR A 10
+        JB C2				; SI, ENTONCES SALIR
+        XOR DX, DX			;LIMPIAR EL COCIENTE SUPERIOR
+        DIV CX				;DIVIDE ENTRE 10
+        OR  DL, 30H			;
+        MOV [SI], DL		;ALMACENTA EL CARACTER ASCII
+        INC SI
+		INC COUNT
+		JMP C1
+    C2:
+        OR AL, 30H			;ALMACENA EL ULTIMO COCIENTE
+        MOV [SI], AL		; COMO CARACTER ASCII
+
+	;EL NUMERO ESTA CONVERTIDO A ASCII PERO EN ORDEN INVERSO
+	; HAY QUE VOLTEARLOS PARA IMPRIMIRLOS
+		LEA SI, BUFFER
+		LEA DI, BUFFERTEMP
+		MOV BX, COUNT
+		PUSH BX
+	C3:
+		MOV AL, [SI]
+		MOV [BX+DI], AL
+		INC SI
+		CMP BX, 0
+		DEC BX
+		JG C3
+		MOV AL, [SI]
+		MOV [BX+DI], AL
+
+		CMP NEGATIVO, 0
+		JE	C4
+		WRITE MENOS
+	C4:
+		POP BX
+		MOV AL, BLANCOS
+		MOV [BX+DI+1], AL
+
+		POP CX
+		POP AX	;EXTRA
+	ENDM
+
+;****************************************************************************
+;MACRO		: ASCTODEC
+;PROPOSITO	: Toma la string que se encuentra en CADNUM y guarda en NUM un entero equivalente
+;PARAMETROS	: NUM,CADNUM
+;****************************************************************************
+
+ASCTODEC	    	MACRO NUM,CADNUM
+        LOCAL D1
+        LOCAL D2
+        LOCAL D3
+        LOCAL D4
+        LOCAL D5
+                PUSH CX
+                MOV NEGATIVO,0
+                MOV NUM,0
+                MOV COUNT,0
+                MOV BX,0
+                LEA SI,CADNUM
+                MOV AL,[SI]
+                MOV CX,SI
+                CMP AL,45
+                JNE D1
+               	INC CX
+                INC SI
+                MOV NEGATIVO,1
+        D1:
+                MOV DL,48
+                CMP [SI],DL
+                JB D2
+                MOV DL,57
+                CMP [SI],DL
+                JA D2
+                INC BX
+                INC SI
+                JMP D1
+        D2:
+                DEC BX
+                MOV SI,CX
+                MOV CX,1
+        D3:
+                MOV AL,[BX+SI]
+                XOR AL,30h
+                MOV AH,0
+                MUL CX
+                ADD NUM,AX
+                CMP BX,0
+                JE D4
+                DEC BX
+                MOV AX,CX
+                MUL BUF
+                MOV CX,AX
+                JMP D3
+        D4:
+                CMP NEGATIVO,0
+                JE D5
+                MOV AX, NUM
+				MOV BX, -1
+				IMUL BX
+				MOV NUM, AX
+        D5:
+                POP CX
+ENDM
+;****************************************************************************
+; Para otras tareas que no aparecen aqui se tienen las ayudas de la libreria
+; STDLIB.lib con el modulo FP.a
+; http://cc.etsii.ull.es/ftp/antiguo/asignas/asignas/TC/AOA/DOC/FP.TXT
+;****************************************************************************

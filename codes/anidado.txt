@@ -1,0 +1,16 @@
+program Contador;
+var
+	num: integer;
+begin
+	num := 0;
+	while num <= 10 do
+	begin
+		if num < 5 then
+			writeln(num, " es menor a 5")
+		else if num = 5 then
+			writeln(num, " es igual a 5")
+		else 
+			writeln(num, " es mayor a 5");
+		num := num + 1
+	end			
+end.

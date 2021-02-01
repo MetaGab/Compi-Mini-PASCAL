@@ -1,0 +1,3 @@
+program error501
+begin
+    "aaa

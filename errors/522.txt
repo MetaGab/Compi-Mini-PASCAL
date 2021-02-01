@@ -1,0 +1,7 @@
+program ejemplo;
+var
+    a : integer;
+    ejemplo : real;
+begin
+    write(a)
+end.

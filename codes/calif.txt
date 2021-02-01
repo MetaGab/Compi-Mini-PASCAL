@@ -1,0 +1,44 @@
+program Calificaciones;
+var
+	materias, n: integer;
+	suma, calif, promedio: real;
+	confirmar: string;
+begin
+	clrscr;
+	suma := 0;
+	repeat
+		begin
+			suma := suma - suma;
+			writeln("Numero de materias");
+			read(materias);
+			for n:=1 to materias do
+				begin
+					writeln("Calificacion ", n);
+					read(calif);
+					suma := calif + suma
+				end;
+			promedio := suma div materias;
+			writeln("Promedio: ", promedio);
+			if (promedio >= 90) then
+				writeln("Mencion honorifica")
+			else
+				if (promedio >=70) and (promedio < 90) then
+					writeln("Aprobado")
+				else
+					writeln("Reprobado");
+			writeln("Desea continuar? (S/N)");
+			read(confirmar);
+			while (confirmar <> "N") and (confirmar <> "S") do
+			begin
+				writeln("Selecciona S o N");
+				read(confirmar)
+			end
+		end
+	until confirmar = "N"
+end.
+
+
+
+
+
+

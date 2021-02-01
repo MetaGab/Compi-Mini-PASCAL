@@ -1,0 +1,6 @@
+programa
+vars
+    a: integer;
+begin
+    write(a)
+end.

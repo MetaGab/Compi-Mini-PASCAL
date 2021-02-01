@@ -1,0 +1,7 @@
+program ejemplo;
+var
+    a : integer;
+begin
+    while a > 2
+        write(a)
+end.

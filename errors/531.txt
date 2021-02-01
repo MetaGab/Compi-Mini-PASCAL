@@ -1,0 +1,9 @@
+program ejemplo;
+var
+    a : integer;
+    b : string;
+begin
+    repeat
+        write(a)
+    
+end.

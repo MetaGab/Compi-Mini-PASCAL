@@ -1,0 +1,4 @@
+program error502
+begin
+    "aaa
+aaa

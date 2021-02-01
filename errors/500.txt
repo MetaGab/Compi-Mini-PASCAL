@@ -1,0 +1,4 @@
+program error500
+begin
+    1.a
+end
